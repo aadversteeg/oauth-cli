@@ -2,7 +2,7 @@
   "profiles": {
     "Auth": {
       "commandName": "Project",
-      "commandLineArgs": "vits-graph",
+      "commandLineArgs": "vits-cert",
       "launchBrowser": true,
       "launchUrl": "weatherforecast",
       "environmentVariables": {

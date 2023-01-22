@@ -5,7 +5,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -13,9 +15,11 @@ using System.Threading.Tasks;
 using System.Web;
 using Auth;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ConsoleApp2
 {
@@ -196,9 +200,24 @@ namespace ConsoleApp2
 
             var formFields = new Dictionary<string, string>();
             formFields.Add("client_id", clientConfiguration.ClientId);
+
             if (clientConfiguration.ClientSecret != null)
             {
                 formFields.Add("client_secret", clientConfiguration.ClientSecret);
+            }
+
+            if(clientConfiguration.ClientCertificateName != null)
+            {
+                X509Store store = new X509Store(StoreLocation.CurrentUser);
+                store.Open(OpenFlags.ReadOnly);
+
+                var certs = store.Certificates.Find(X509FindType.FindBySubjectName, clientConfiguration.ClientCertificateName, false);
+                var signingCert = certs[0];
+               
+                var jwtToken = JwtCreator.CreateTokenWithX509SigningCredentials(signingCert, clientConfiguration.ClientId, clientConfiguration.TenantId);
+                formFields.Add("client_assertion_type", UrlEncoder.Default.Encode("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
+                formFields.Add("client_assertion", jwtToken);
+
             }
             formFields.Add("scope", encodedScopes);
 

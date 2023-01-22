@@ -13,6 +13,8 @@ namespace Auth.Configuration
 
         public string ClientSecret { get; set; }
 
+        public string ClientCertificateName { get; set; }
+
         public bool UsePKCE { get; set; }
 
         public string? RedirectUri { get; set; }
@@ -20,6 +22,8 @@ namespace Auth.Configuration
         public GrantType GrantType { get; set; }
 
         public string ApplicationIdUri { get; set; }
+
+        public string TenantId { get; set; }
 
         public string[] Scopes { get; set; }
 
