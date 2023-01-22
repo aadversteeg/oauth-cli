@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using Auth;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -59,14 +60,27 @@ namespace ConsoleApp2
             bool cancelled = false;
             bool usePKCE = true;
 
-            // set up configuration
+
+            // get basic configuration to see if we need to load other configuration providers as well
             var configurationBuilder = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddUserSecrets("1cf919bb-3567-4c56-9401-931d767f1c4e")
                 .AddEnvironmentVariables();
-
             var configuration = configurationBuilder.Build();
 
+            // set up configuration to be used by the rest of the applicaton
+            configurationBuilder = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+
+            var userSecretsID = configuration.GetValue<string>("UserSecretsId");
+            if(!string.IsNullOrEmpty(userSecretsID))
+            {
+                configurationBuilder.AddUserSecrets(userSecretsID);
+            }
+            configurationBuilder.AddEnvironmentVariables();
+            configuration = configurationBuilder.Build();
+
+
+            // Get all client configurations
             var clientConfigurations = new Dictionary<string, Auth.Configuration.ClientConfiguration>();
             configuration.GetSection("clients").Bind(clientConfigurations);
 
@@ -104,6 +118,9 @@ namespace ConsoleApp2
             scopes = scopes.Select(s => HttpUtility.UrlEncode(s)).ToArray();
 
             var encodedScopes = string.Join(" ", scopes);
+
+
+            // Get the code
 
             if (clientConfiguration.GrantType == Auth.Configuration.GrantType.AuthorizationCode)
             {
@@ -173,52 +190,36 @@ namespace ConsoleApp2
                 await app.StopAsync();
                 Console.WriteLine($"Received code: {returnedCode}");
             }
+
             // Now get the token
 
 
-
-            var client = new HttpClient();
-
-            string body = string.Empty;
-
-          //  Console.WriteLine($"Using credentials {clientConfiguration.ClientId}:{clientConfiguration.ClientSecret}");
+            var formFields = new Dictionary<string, string>();
+            formFields.Add("client_id", clientConfiguration.ClientId);
+            if (clientConfiguration.ClientSecret != null)
+            {
+                formFields.Add("client_secret", clientConfiguration.ClientSecret);
+            }
+            formFields.Add("scope", encodedScopes);
 
 
             if (clientConfiguration.GrantType == Auth.Configuration.GrantType.AuthorizationCode)
             {
-                body =
-                    $"client_id={clientConfiguration.ClientId}" +
-                    $"&scope={encodedScopes}" +
-                    $"&code={returnedCode}" +
-                    $"&redirect_uri={encodedRedirectUri}" +
-                    $"&grant_type=authorization_code";
+                formFields.Add("grant_type", "authorizaton_code");
 
-                if (clientConfiguration.ClientSecret != null)
-                {
-                    body = body + $"&client_secret={clientConfiguration.ClientSecret}";
-                }
-
-
+                formFields.Add("code", returnedCode);
+                formFields.Add("redirect_uri", encodedRedirectUri);
+                
                 if (usePKCE)
                 {
-                    body = body + $"&code_verifier={codeVerifier}";
+                    formFields.Add("code_verifier", codeVerifier);
                 }
-
             }
 
             if (clientConfiguration.GrantType == Auth.Configuration.GrantType.ClientCredentials)
             {
-                body =
-                    $"client_id={clientConfiguration.ClientId}" +
-                    $"&scope={encodedScopes}" +
-                    $"&grant_type=client_credentials";
-
-                if (clientConfiguration.ClientSecret != null)
-                {
-                    body = body + $"&client_secret={clientConfiguration.ClientSecret}";
-                }
+                formFields.Add("grant_type", "client_credentials");            
             }
-
 
             if (clientConfiguration.GrantType == Auth.Configuration.GrantType.Password)
             {
@@ -254,19 +255,14 @@ namespace ConsoleApp2
 
                 Console.WriteLine();
 
-                body =
-                    $"client_id={clientConfiguration.ClientId}" +
-                    $"&scope={encodedScopes}" +
-                    $"&grant_type=password" +
-                    $"&username={userName}" +
-                    $"&password={password}";
-
-                if (clientConfiguration.ClientSecret != null)
-                {
-                    body = body + $"&client_secret={clientConfiguration.ClientSecret}";
-                }
+                formFields.Add("grant_type", "password");
+                formFields.Add("username", userName);
+                formFields.Add("password", password);
             }
 
+            var body = BodyFormatter.Format(formFields);
+
+            var client = new HttpClient();
             var response = await client.PostAsync(
                 openIdConfiguration.TokenEndpoint,
                 new StringContent(body, Encoding.UTF8, "application/x-www-form-urlencoded"));
@@ -283,7 +279,6 @@ namespace ConsoleApp2
 
 
             Console.WriteLine($"Received token: {tokenResult}");
-
         }
     }
 }
