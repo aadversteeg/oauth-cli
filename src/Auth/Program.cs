@@ -167,7 +167,7 @@ namespace ConsoleApp2
 
                 // Configure the HTTP request pipeline.
 
-                app.UseHttpsRedirection();
+                //app.UseHttpsRedirection();
                 app.UseCors(builder =>
                 {
                     builder
@@ -224,7 +224,7 @@ namespace ConsoleApp2
 
             if (clientConfiguration.GrantType == Auth.Configuration.GrantType.AuthorizationCode)
             {
-                formFields.Add("grant_type", "authorizaton_code");
+                formFields.Add("grant_type", "authorization_code");
 
                 formFields.Add("code", returnedCode);
                 formFields.Add("redirect_uri", encodedRedirectUri);
@@ -279,7 +279,13 @@ namespace ConsoleApp2
                 formFields.Add("password", password);
             }
 
+            Console.WriteLine("Form fields:");
+            foreach(var formField in formFields)
+                Console.WriteLine($"  {formField.Key}={formField.Value}");
+
             var body = BodyFormatter.Format(formFields);
+
+            Console.WriteLine(body);
 
             var client = new HttpClient();
             var response = await client.PostAsync(
@@ -298,6 +304,12 @@ namespace ConsoleApp2
 
 
             Console.WriteLine($"Received token: {tokenResult}");
+
+            if( System.Diagnostics.Debugger.IsAttached)
+            {
+                Console.WriteLine("Press any key...");
+                Console.ReadLine();
+            }
         }
     }
 }
