@@ -1,9 +1,9 @@
-using Auth;
+using Core.Infrastructure.ConsoleApp;
 using FluentAssertions;
 using System.Collections.Generic;
 using Xunit;
 
-namespace Tests.Auth
+namespace Tests.Infrastructure.ConsoleApp
 {
     public class BodyFormatterTests
     {

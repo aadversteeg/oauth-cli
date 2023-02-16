@@ -13,21 +13,20 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
-using Auth;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 
-namespace ConsoleApp2
+namespace Core.Infrastructure.ConsoleApp
 {
     class Program
     {
-        static Task<Auth.Models.OpenIdConfiguration?> GetOpenIdConfiguration(string url)
+        static Task<Models.OpenIdConfiguration?> GetOpenIdConfiguration(string url)
         {
             var client = new HttpClient();
-            return client.GetFromJsonAsync<Auth.Models.OpenIdConfiguration>(url);
+            return client.GetFromJsonAsync<Models.OpenIdConfiguration>(url);
         }
 
         static string GenerateRandomCodeVerifier()
@@ -84,12 +83,12 @@ namespace ConsoleApp2
 
 
             // Get all client configurations
-            var clientConfigurations = new Dictionary<string, Auth.Configuration.ClientConfiguration>();
+            var clientConfigurations = new Dictionary<string, Configuration.ClientConfiguration>();
             configuration.GetSection("clients").Bind(clientConfigurations);
 
             Console.WriteLine($"Authorizing for client {args[0]}");
 
-            Auth.Configuration.ClientConfiguration clientConfiguration = null;
+            Configuration.ClientConfiguration clientConfiguration = null;
 
             if (!clientConfigurations.TryGetValue(args[0], out clientConfiguration))
                 {
@@ -125,7 +124,7 @@ namespace ConsoleApp2
 
             // Get the code
 
-            if (clientConfiguration.GrantType == Auth.Configuration.GrantType.AuthorizationCode)
+            if (clientConfiguration.GrantType == Configuration.GrantType.AuthorizationCode)
             {
                 var url = $"{openIdConfiguration.AuthorizeEndpoint}?" +
                     $"client_id={clientConfiguration.ClientId}" +
@@ -221,7 +220,7 @@ namespace ConsoleApp2
             formFields.Add("scope", encodedScopes);
 
 
-            if (clientConfiguration.GrantType == Auth.Configuration.GrantType.AuthorizationCode)
+            if (clientConfiguration.GrantType == Configuration.GrantType.AuthorizationCode)
             {
                 formFields.Add("grant_type", "authorizaton_code");
 
@@ -234,12 +233,12 @@ namespace ConsoleApp2
                 }
             }
 
-            if (clientConfiguration.GrantType == Auth.Configuration.GrantType.ClientCredentials)
+            if (clientConfiguration.GrantType == Configuration.GrantType.ClientCredentials)
             {
                 formFields.Add("grant_type", "client_credentials");            
             }
 
-            if (clientConfiguration.GrantType == Auth.Configuration.GrantType.Password)
+            if (clientConfiguration.GrantType == Configuration.GrantType.Password)
             {
                 Console.Write("Username:");
                 var userName = Console.ReadLine();

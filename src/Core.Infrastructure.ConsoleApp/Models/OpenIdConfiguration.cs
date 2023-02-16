@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Auth.Models
+namespace Core.Infrastructure.ConsoleApp.Models
 {
     public class OpenIdConfiguration
     {

@@ -1,4 +1,4 @@
-﻿namespace Auth.Configuration
+﻿namespace Core.Infrastructure.ConsoleApp.Configuration
 {
     public enum GrantType
     {

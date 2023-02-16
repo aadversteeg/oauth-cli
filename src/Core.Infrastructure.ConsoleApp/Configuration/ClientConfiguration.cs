@@ -1,9 +1,8 @@
 ﻿#pragma warning disable CS8618 
 
-using Auth.Models;
 using System.Collections.Generic;
 
-namespace Auth.Configuration
+namespace Core.Infrastructure.ConsoleApp.Configuration
 {
     public class ClientConfiguration
     {
