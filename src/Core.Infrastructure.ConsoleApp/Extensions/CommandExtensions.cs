@@ -8,7 +8,9 @@ namespace Core.Infrastructure.ConsoleApp.Extensions
 {
     public static class CommandExtensions
     {
-        public static void SetHandler(this Command command, Func<InvocationContext, CancellationToken, Task> handle, Action<InvocationContext> handleCancellation)
+        public static void SetHandler(this Command command, 
+            Func<InvocationContext, CancellationToken, Task> handle, 
+            Action<InvocationContext> handleCancellation)
         {
             command.SetHandler(async context =>
             {
