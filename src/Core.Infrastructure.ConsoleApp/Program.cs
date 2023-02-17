@@ -25,9 +25,6 @@ namespace Core.Infrastructure.ConsoleApp
     class Program
     {
 
-
-
-
         static async Task<int> Main(string[] args)
         {
             // get basic configuration to see if we need to load other configuration providers as well
@@ -55,6 +52,13 @@ namespace Core.Infrastructure.ConsoleApp
             var console = new SystemConsole();
             var commandLineHandler = new CommandLineHandler(new ClientService(console, clientConfigurations), console);
             var invokeResult = await commandLineHandler.Invoke(args);
+
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                Console.WriteLine("Press any key...");
+                Console.ReadLine();
+            }
+
             return invokeResult;
         }
     }

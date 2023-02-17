@@ -2,6 +2,7 @@
 using FluentAssertions;
 using Moq;
 using System.CommandLine;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -23,7 +24,7 @@ namespace Tests.Infrastructure.ConsoleApp
 
             // assert
             result.Should().Be(0);
-            clientServiceMock.Verify((m) => m.GetAccessToken(It.Is<string>(a => a == "client-name")), Times.Once());
+            clientServiceMock.Verify((m) => m.GetAccessToken(It.Is<string>(a => a == "client-name"), It.IsAny<CancellationToken>()), Times.Once());
         }
     }
 }

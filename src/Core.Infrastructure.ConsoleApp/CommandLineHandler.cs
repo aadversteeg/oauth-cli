@@ -1,6 +1,8 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
+using System.CommandLine.Invocation;
+using System.CommandLine.IO;
 using System.Threading.Tasks;
+using Core.Infrastructure.ConsoleApp.Extensions;
 
 namespace Core.Infrastructure.ConsoleApp
 {
@@ -15,6 +17,12 @@ namespace Core.Infrastructure.ConsoleApp
             _console = console;
         }
 
+        public void HandleCancellation(InvocationContext context)
+        {
+            context.Console.Error.WriteLine("The operation was aborted.");
+            context.ExitCode = 1;
+        }
+
         public async Task<int> Invoke(string[] args)
         {
             var rootCommand = new RootCommand("Command Line Interface for retrieving OAuth access tokens.");
@@ -27,36 +35,31 @@ namespace Core.Infrastructure.ConsoleApp
             getAccessTokenCommand.AddAlias("gat");
             getAccessTokenCommand.Add(clientNameArgument);
 
-            getAccessTokenCommand.SetHandler(async context =>
-            {
-                var clientNameArgumentValue = context.ParseResult.GetValueForArgument(clientNameArgument);
-                var accessToken = await _clientService.GetAccessToken(clientNameArgumentValue);
-
-                Console.WriteLine($"Received token: {accessToken}");
-
-                if (System.Diagnostics.Debugger.IsAttached)
+            getAccessTokenCommand.SetHandler(async (context, cancellationToken) =>
                 {
-                    Console.WriteLine("Press any key...");
-                    Console.ReadLine();
-                }
-            });
+                    var clientNameArgumentValue = context.ParseResult.GetValueForArgument(clientNameArgument);
+                    var accessToken = await _clientService.GetAccessToken(clientNameArgumentValue, cancellationToken);
+                    context.Console.WriteLine($"Received token: {accessToken}");
+                }, 
+                HandleCancellation);
 
             clientCommand.AddCommand(getAccessTokenCommand);
 
             var listCommand = new Command("list", "Get a list of all clients.");
 
-            listCommand.SetHandler(async context =>
-            {
-                var clients = await _clientService.GetClients();
-                foreach ( var client in clients) {
-                    _console.WriteLine(client);
-                }
-            });
+            listCommand.SetHandler( async (context, cancellationToken) =>
+                {
+                        var clients = await _clientService.GetClients(cancellationToken);
+                        foreach (var client in clients)
+                        {
+                            _console.WriteLine(client);
+                        }
+                }, 
+                HandleCancellation);
             clientCommand.AddCommand(listCommand);
+            rootCommand.AddCommand(clientCommand);
 
-            rootCommand.Add(clientCommand);
-
-            var invokeResult = await  rootCommand.InvokeAsync(args, _console);
+            var invokeResult = await rootCommand.InvokeAsync(args, _console);
             return invokeResult;
         }
     }

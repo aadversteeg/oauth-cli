@@ -31,12 +31,11 @@ namespace Core.Infrastructure.ConsoleApp
             _clients = clients;
         }
 
-        public async Task<string> GetAccessToken(string clientName)
+        public async Task<string> GetAccessToken(string clientName, CancellationToken cancellationToken)
         {
             Console.WriteLine($"Authorizing for client {clientName}");
 
             string? returnedCode = null;
-            bool cancelled = false;
             bool usePKCE = true;
 
             Configuration.ClientConfiguration clientConfiguration = null;
@@ -47,14 +46,7 @@ namespace Core.Infrastructure.ConsoleApp
                 return String.Empty;
             }
 
-            Console.CancelKeyPress += (object sender, ConsoleCancelEventArgs e) =>
-            {
-                e.Cancel = true;
-                cancelled = true;
-
-            };
-
-            var openIdConfiguration = await GetOpenIdConfiguration(clientConfiguration.WellknownEndpoint);
+            var openIdConfiguration = await GetOpenIdConfiguration(clientConfiguration.WellknownEndpoint, cancellationToken);
 
             var codeVerifier = GenerateRandomCodeVerifier();
             var codeChallenge = GenerateCodeChallenge(codeVerifier);
@@ -136,9 +128,18 @@ namespace Core.Infrastructure.ConsoleApp
 
                 // Wait for code from redirect
 
-                while (returnedCode == null && !cancelled)
+                while (returnedCode == null)
                 {
-                    await Task.Delay(1000);
+                    try
+                    {
+                        await Task.Delay(1000, cancellationToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        await app.StopAsync();
+                        throw;
+                    }
+                    await Task.Delay(1000, cancellationToken);
                 }
                 await app.StopAsync();
                 Console.WriteLine($"Received code: {returnedCode}");
@@ -239,7 +240,7 @@ namespace Core.Infrastructure.ConsoleApp
             var client = new HttpClient();
             var response = await client.PostAsync(
                 openIdConfiguration.TokenEndpoint,
-                new StringContent(body, Encoding.UTF8, "application/x-www-form-urlencoded"));
+                new StringContent(body, Encoding.UTF8, "application/x-www-form-urlencoded"), cancellationToken);
 
             var tokenResult = await response.Content.ReadAsStringAsync();
 
@@ -251,22 +252,19 @@ namespace Core.Infrastructure.ConsoleApp
 
             tokenResult = JsonSerializer.Serialize(json, jsonSerializerOptions);
 
-
-
-
             return tokenResult;
         }
 
-        public Task<IReadOnlyCollection<string>> GetClients() 
+        public Task<IReadOnlyCollection<string>> GetClients(CancellationToken cancellationToken) 
         {
             var clientNames = (IReadOnlyCollection<string>)_clients.Keys;
             return Task.FromResult(clientNames);
         }
 
-        private static Task<Models.OpenIdConfiguration?> GetOpenIdConfiguration(string url)
+        private static Task<Models.OpenIdConfiguration?> GetOpenIdConfiguration(string url, CancellationToken cancellationToken)
         {
             var client = new HttpClient();
-            return client.GetFromJsonAsync<Models.OpenIdConfiguration>(url);
+            return client.GetFromJsonAsync<Models.OpenIdConfiguration>(url, cancellationToken);
         }
 
         private static string GenerateRandomCodeVerifier()
