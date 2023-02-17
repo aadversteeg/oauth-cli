@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UserSecretsId>1cf919bb-3567-4c56-9401-931d767f1c4e</UserSecretsId>
     <AssemblyName>auth</AssemblyName>
