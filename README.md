@@ -42,13 +42,33 @@ The configuration should match the configuration on the token provider.
 
 ## Usage
 
+To get a list of all configured clients use:
+``` shell
+auth client list
+```
+
 To get the acces token for a a client simply use the name of the client as specified in the configuration as the first argument. For example, to get the access token for the client named `opendict-auth-code` use:
 
 ``` shell
-auth opendict-auth-code
+auth client get-access-token opendict-auth-code
 ```
 
-When the access token is succesfully retrieved it is writen to the console output.
+Some commands also have a shorter alias.  For getting the access token you can also use:
+
+``` shell
+auth client gat opendict-auth-code
+```
+
+When the access token is succesfully retrieved, it is writen to the console output.
+
+To see more commands, arguments and options, just use:
+``` shell
+auth --help
+```
+
+
+
+
 
 
 ## References
