@@ -23,6 +23,6 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore ./src/oauth-cli.sln
     - name: Build
-      run: dotnet build --no-restore .**/oauth-cli.sln
+      run: dotnet build ./src/oauth-cli.sln --no-restore 
     - name: Test
-      run: dotnet test **/Tests.*.csproj --no-build --verbosity normal 
+      run: dotnet test ./src/Tests.Infrastructure.ConsoleApp/Tests.Infrastructure.ConsoleApp.csproj --no-build --verbosity normal 
