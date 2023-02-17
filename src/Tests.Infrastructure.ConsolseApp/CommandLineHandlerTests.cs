@@ -2,6 +2,7 @@
 using FluentAssertions;
 using Moq;
 using System.CommandLine;
+using System.CommandLine.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -16,8 +17,9 @@ namespace Tests.Infrastructure.ConsoleApp
         {
             // arrange
             var clientServiceMock = new Mock<IClientService>();
-            var consoleMock = new Mock<IConsole>();
-            var commandLineHandler = new CommandLineHandler(clientServiceMock.Object, consoleMock.Object);
+            clientServiceMock.Setup(m => m.GetAccessToken(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("access-token");
+            var console = new TestConsole();
+            var commandLineHandler = new CommandLineHandler(clientServiceMock.Object, console);
 
             // act
             var result = await commandLineHandler.Invoke(new[] { "client", "get-access-token", "client-name" });
