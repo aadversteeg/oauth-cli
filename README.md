@@ -1,5 +1,7 @@
 # oauth-cli
 
+[![validate](https://github.com/aadversteeg/oauth-cli/actions/workflows/validate.yml/badge.svg)](https://github.com/aadversteeg/oauth-cli/actions/workflows/validate.yml)
+
 Command line interface for retreiving OAuth tokens.
 
 The following flows or grant types are supported
