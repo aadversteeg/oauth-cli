@@ -26,5 +26,9 @@
     <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
 
+	<PropertyGroup>
+		<Version>0.0.0</Version>
+	</PropertyGroup>
+
 
 </Project>
