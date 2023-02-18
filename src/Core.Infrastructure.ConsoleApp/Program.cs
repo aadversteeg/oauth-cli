@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -27,6 +28,15 @@ namespace Core.Infrastructure.ConsoleApp
 
         static async Task<int> Main(string[] args)
         {
+            Version latestVersion = null;
+
+            var thread = new Thread( async () => {
+                var gitHubService = new Core.Infrastructure.GitHub.GitHubService();
+                latestVersion = await gitHubService.GetLatestVersion(CancellationToken.None);
+            });
+            thread.Start();
+
+
             // get basic configuration to see if we need to load other configuration providers as well
             var configurationBuilder = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -52,6 +62,18 @@ namespace Core.Infrastructure.ConsoleApp
             var console = new SystemConsole();
             var commandLineHandler = new CommandLineHandler(new ClientService(console, clientConfigurations), console);
             var invokeResult = await commandLineHandler.Invoke(args);
+
+            while( latestVersion == null)
+            {
+                await Task.Delay(200);
+            }
+
+            var currentVersion = new Version(Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
+            if (currentVersion < latestVersion)
+            {
+                Console.WriteLine($"A newer version is available {currentVersion} -> {latestVersion}");
+            }
+
 
             if (System.Diagnostics.Debugger.IsAttached)
             {

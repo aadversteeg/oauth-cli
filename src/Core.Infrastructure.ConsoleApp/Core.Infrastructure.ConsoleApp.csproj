@@ -18,6 +18,10 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.26.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Core.Infrastructure.GitHub\Core.Infrastructure.GitHub.csproj" />
+  </ItemGroup>
+
   <PropertyGroup>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
