@@ -1,0 +1,80 @@
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+env:
+  APPLICATION_NAME: oauth
+  APPLICATION_VERSION: ${{ github.ref_name }}
+  DOTNET_VERSION: 7.0.x
+  SOLUTION_FILE: ./src/oauth-cli.sln
+  CONSOLE_PROJECT_FILE: ./src/Core.Infrastructure.ConsoleApp/Core.Infrastructure.ConsoleApp.csproj
+ 
+  
+jobs:
+  release:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+    
+      - name: "Set environmental variables"
+        run: |
+          echo "ARTIFACT_BASENAME=$APPLICATION_NAME-$APPLICATION_VERSION" >> $GITHUB_ENV
+    
+      - name: GitHub Tag Name example
+        run: |
+          echo "Application Name: $APPLICATION_NAME"
+          echo "Application Version: $APPLICATION_VERSION"
+          echo "Artifact basename: $ARTIFACT_BASENAME"
+          
+      - uses: actions/checkout@v3
+    
+      - name: Update version
+        run: |  
+          $env:APPLICATION_VERSION
+          $version = $env:APPLICATION_VERSION -replace '.*v(\d+(\.\d+){1,3}).*', '$1'
+          $content = Get-Content -Path ./src/ConsoleApp/ConsoleApp.csproj
+          $content = $content -replace "<Version>0.0.0</Version>", "<Version>${version}</Version>"
+          Set-Content -Path ./src/ConsoleApp/ConsoleApp.csproj -Value $content
+        shell: pwsh
+        
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          
+      - name: Restore dependencies
+        run: dotnet restore ./src/src.sln
+        
+      - name: Build
+        run: dotnet build ${{ env.SOLUTION_FILE }} --no-restore 
+        
+      - name: Publish
+
+        run: |
+          dotnet publish -r win-x64 -p:PublishSingleFile=true ${{ env.CONSOLE_PROJECT_FILE }} -o "${{ env.ARTIFACT_BASENAME }}-win-x64" --self-contained --no-build
+
+      - name: Create  Archive
+        run: |
+          7z a ./${{ env.ARTIFACT_BASENAME }}-win-x64.zip ./${{ env.ARTIFACT_BASENAME }}-win-x64/*     
+          
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ env.APPLICATION_VERSION }}
+          tag_name: ${{ github.ref }}
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }} 
+          
+      - name: upload windows artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ env.ARTIFACT_BASENAME }}-win-x64.zip
+          asset_name: ${{ env.ARTIFACT_BASENAME }}-win-x64.zip
+          asset_content_type: application/zip
