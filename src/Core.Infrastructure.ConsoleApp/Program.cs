@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using Ave.Extensions.Console.StateManagement;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -59,8 +60,23 @@ namespace Core.Infrastructure.ConsoleApp
             var clientConfigurations = new Dictionary<string, Configuration.ClientConfiguration>();
             configuration.GetSection("clients").Bind(clientConfigurations);
 
+
+            // determine root folder for saving session data
+            var path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ave", "oauth-cli");
+
+            var sessionStateSerializer = new SessionStateProtector(new BinarySessionStateSerializer());
+
+            var sessionStorage = new FileSessionStorage(new SystemDirectory(), new SystemFile(), sessionStateSerializer, path);
+
+            // create Session for generating correct session key
+            var sessionMananager = new SessionManager(sessionStorage, new SystemProcessIdProvider());
+
+            // create state manager
+            var stateManager = new StateManager(sessionMananager);
+
+
             var console = new SystemConsole();
-            var commandLineHandler = new CommandLineHandler(new ClientService(console, clientConfigurations), console);
+            var commandLineHandler = new CommandLineHandler(new ClientService(console, clientConfigurations), console, stateManager);
             var invokeResult = await commandLineHandler.Invoke(args);
 
             while( latestVersion == null)

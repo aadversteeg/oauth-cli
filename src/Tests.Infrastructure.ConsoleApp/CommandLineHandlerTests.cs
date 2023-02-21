@@ -1,4 +1,5 @@
-﻿using Core.Infrastructure.ConsoleApp;
+﻿using Ave.Extensions.Console.StateManagement;
+using Core.Infrastructure.ConsoleApp;
 using FluentAssertions;
 using Moq;
 using System.CommandLine;
@@ -18,8 +19,9 @@ namespace Tests.Infrastructure.ConsoleApp
             // arrange
             var clientServiceMock = new Mock<IClientService>();
             clientServiceMock.Setup(m => m.GetAccessToken(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("access-token");
+            var stateManagerMock = new Mock<StateManager>();
             var console = new TestConsole();
-            var commandLineHandler = new CommandLineHandler(clientServiceMock.Object, console);
+            var commandLineHandler = new CommandLineHandler(clientServiceMock.Object, console, stateManagerMock.Object);
 
             // act
             var result = await commandLineHandler.Invoke(new[] { "client", "get-access-token", "client-name" });

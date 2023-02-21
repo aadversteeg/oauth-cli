@@ -2,6 +2,7 @@
 using System.CommandLine.Invocation;
 using System.CommandLine.IO;
 using System.Threading.Tasks;
+using Ave.Extensions.Console.StateManagement;
 using Core.Infrastructure.ConsoleApp.Extensions;
 
 namespace Core.Infrastructure.ConsoleApp
@@ -10,11 +11,13 @@ namespace Core.Infrastructure.ConsoleApp
     {
         private readonly IClientService _clientService;
         private readonly IConsole _console;
+        private readonly StateManager _stateManager;
 
-        public CommandLineHandler(IClientService clientService, IConsole console)
+        public CommandLineHandler(IClientService clientService, IConsole console, StateManager stateManager)
         {
             _clientService = clientService;
             _console = console;
+            _stateManager = stateManager;
         }
 
         public void HandleCancellation(InvocationContext context)
@@ -58,6 +61,47 @@ namespace Core.Infrastructure.ConsoleApp
                 HandleCancellation);
             clientCommand.AddCommand(listCommand);
             rootCommand.AddCommand(clientCommand);
+
+
+            
+            var stateCommand = new Command("state", "Manage application state.");
+
+
+            var stateNameArgument = new Argument<string>("name", "Name of state variable.");
+
+            var stateSetCommand = new Command("set", "Set state value");
+            var stateValueArgument = new Argument<string>("Value", "Value of state variable.");
+            stateSetCommand.Add(stateNameArgument);
+            stateSetCommand.Add(stateValueArgument);
+
+            stateSetCommand.SetHandler( (context) =>
+            {
+                var stateNameArgumentValue = context.ParseResult.GetValueForArgument(stateNameArgument);
+                var stateValueArgumentValue = context.ParseResult.GetValueForArgument(stateValueArgument);
+                _stateManager.SetValue(StateScope.Session, stateNameArgumentValue, stateValueArgumentValue);
+                _stateManager.Save();
+
+                _console.WriteLine($"{stateNameArgumentValue}={stateValueArgumentValue}");
+            });
+            stateCommand.Add(stateSetCommand);
+
+
+            var stateGetCommand = new Command("get", "Get state value");
+            stateGetCommand.Add(stateNameArgument);
+
+            stateGetCommand.SetHandler((context) =>
+            {
+                var stateNameArgumentValue = context.ParseResult.GetValueForArgument(stateNameArgument);
+
+                var value = _stateManager.GetValue<string>(StateScope.Session, stateNameArgumentValue);
+                _console.WriteLine($"{stateNameArgumentValue}={value}");
+            });
+            stateCommand.Add(stateGetCommand);
+
+
+
+            rootCommand.AddCommand(stateCommand);
+
 
             var invokeResult = await rootCommand.InvokeAsync(args, _console);
             return invokeResult;
