@@ -11,9 +11,9 @@ namespace Core.Infrastructure.ConsoleApp
     {
         private readonly IClientService _clientService;
         private readonly IConsole _console;
-        private readonly StateManager _stateManager;
+        private readonly IStateManager _stateManager;
 
-        public CommandLineHandler(IClientService clientService, IConsole console, StateManager stateManager)
+        public CommandLineHandler(IClientService clientService, IConsole console, IStateManager stateManager)
         {
             _clientService = clientService;
             _console = console;
@@ -79,7 +79,7 @@ namespace Core.Infrastructure.ConsoleApp
                 var stateNameArgumentValue = context.ParseResult.GetValueForArgument(stateNameArgument);
                 var stateValueArgumentValue = context.ParseResult.GetValueForArgument(stateValueArgument);
                 _stateManager.SetValue(StateScope.Session, stateNameArgumentValue, stateValueArgumentValue);
-                _stateManager.Save();
+               ((StateManager) _stateManager).Save();
 
                 _console.WriteLine($"{stateNameArgumentValue}={stateValueArgumentValue}");
             });
