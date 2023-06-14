@@ -2,7 +2,7 @@
   "profiles": {
     "Auth": {
       "commandName": "Project",
-      "commandLineArgs": "vits-graph",
+      "commandLineArgs": "client gat ads-acc",
       "launchBrowser": true,
       "launchUrl": "weatherforecast",
       "environmentVariables": {
