@@ -16,6 +16,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using Ave.Extensions.Console.StateManagement;
+using Core.Application;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -74,9 +75,26 @@ namespace Core.Infrastructure.ConsoleApp
             // create state manager
             var stateManager = new StateManager(sessionMananager);
 
-
             var console = new SystemConsole();
-            var commandLineHandler = new CommandLineHandler(new ClientService(console, clientConfigurations), console, stateManager);
+            var passwordProvider = new PasswordProvider();
+
+            // todo: get certificate stores from app settings
+            var certificateProviderFactory = new CertificateRepositoryProvider(
+                new Dictionary<string, ICertificateRepository>
+                {
+                    { "windows-certificate-store", new Windows.CertificateStore.CertificateRepository() },
+                    { "local-file-system", new FileSystem.CertificateRepository("D:\\Transavia\\Certificates", passwordProvider) }
+                });
+
+            var commandLineHandler = new CommandLineHandler(
+                new ClientService(console, 
+                    certificateProviderFactory, 
+                    passwordProvider, 
+                    clientConfigurations
+                ), 
+                console, 
+                stateManager);
+
             var invokeResult = await commandLineHandler.Invoke(args);
 
             while( latestVersion == null)

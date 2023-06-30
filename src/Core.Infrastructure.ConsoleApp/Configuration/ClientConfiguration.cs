@@ -14,6 +14,8 @@ namespace Core.Infrastructure.ConsoleApp.Configuration
 
         public string ClientCertificateName { get; set; }
 
+        public string ClientCertificateStore { get; set; }
+
         public bool UsePKCE { get; set; }
 
         public string? RedirectUri { get; set; }

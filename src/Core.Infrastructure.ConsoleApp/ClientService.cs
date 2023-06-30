@@ -18,6 +18,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using System.Security.Cryptography;
+using Core.Application;
 
 namespace Core.Infrastructure.ConsoleApp
 {
@@ -25,9 +26,17 @@ namespace Core.Infrastructure.ConsoleApp
     {
         private readonly IConsole _console;
         private readonly IDictionary<string, ClientConfiguration> _clients;
+        private readonly ICertificateRepositoryProvider _certificateProviderFactory;
+        private readonly IPasswordProvider _passwordProvider;
 
-        public ClientService(IConsole console, IDictionary<string, ClientConfiguration> clients) {
+        public ClientService(
+            IConsole console, 
+            ICertificateRepositoryProvider certificateProviderFactory, 
+            IPasswordProvider passwordProvider,
+            IDictionary<string, ClientConfiguration> clients) {
             _console = console;
+            _certificateProviderFactory = certificateProviderFactory;
+            _passwordProvider = passwordProvider;
             _clients = clients;
         }
 
@@ -149,7 +158,6 @@ namespace Core.Infrastructure.ConsoleApp
 
             // Now get the token
 
-
             var formFields = new Dictionary<string, string>();
             formFields.Add("client_id", clientConfiguration.ClientId);
 
@@ -158,21 +166,34 @@ namespace Core.Infrastructure.ConsoleApp
                 formFields.Add("client_secret", clientConfiguration.ClientSecret);
             }
 
+            X509Certificate2 signingCert = null;
+
             if (clientConfiguration.ClientCertificateName != null)
             {
-                X509Store store = new X509Store(StoreLocation.CurrentUser);
-                store.Open(OpenFlags.ReadOnly);
+                var maybeClientRepository = clientConfiguration.ClientCertificateStore != null ?
+                    _certificateProviderFactory.GetRepository(clientConfiguration.ClientCertificateStore) :
+                    _certificateProviderFactory.GetRepository("windows-certificate-store");
 
-                var certs = store.Certificates.Find(X509FindType.FindBySubjectName, clientConfiguration.ClientCertificateName, false);
-                var signingCert = certs[0];
+                if (maybeClientRepository.HasValue)
+                {
+                    var certificateResult = maybeClientRepository.Value.GetCertificate(clientConfiguration.ClientCertificateName);
+                    if (certificateResult.IsFailure)
+                    {
+                        throw new Exception(certificateResult.Error);
+                    }
 
+                    signingCert = certificateResult.Value;
+                }
+            }
+
+            if (signingCert != null)
+            {
                 var jwtToken = JwtCreator.CreateTokenWithX509SigningCredentials(signingCert, clientConfiguration.ClientId, clientConfiguration.TenantId);
                 formFields.Add("client_assertion_type", UrlEncoder.Default.Encode("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
                 formFields.Add("client_assertion", jwtToken);
-
             }
-            formFields.Add("scope", encodedScopes);
 
+            formFields.Add("scope", encodedScopes);
 
             if (clientConfiguration.GrantType == Configuration.GrantType.AuthorizationCode)
             {
@@ -197,33 +218,8 @@ namespace Core.Infrastructure.ConsoleApp
                 Console.Write("Username:");
                 var userName = Console.ReadLine();
                 Console.WriteLine($"-{userName}-");
-                Console.Write("Password:");
 
-
-                var password = string.Empty;
-                ConsoleKeyInfo keyInfo;
-                do
-                {
-                    keyInfo = Console.ReadKey(true);
-                    // Skip if Backspace or Enter is Pressed
-                    if (keyInfo.Key != ConsoleKey.Backspace && keyInfo.Key != ConsoleKey.Enter)
-                    {
-                        password += keyInfo.KeyChar;
-                        Console.Write("*");
-                    }
-                    else
-                    {
-                        if (keyInfo.Key == ConsoleKey.Backspace && password.Length > 0)
-                        {
-                            // Remove last charcter if Backspace is Pressed
-                            password = password.Substring(0, (password.Length - 1));
-                            Console.Write("\b \b");
-                        }
-                    }
-                }
-                // Stops Getting Password Once Enter is Pressed
-                while (keyInfo.Key != ConsoleKey.Enter);
-
+                var password = _passwordProvider.GetPassword("Password");
                 Console.WriteLine();
 
                 formFields.Add("grant_type", "password");
