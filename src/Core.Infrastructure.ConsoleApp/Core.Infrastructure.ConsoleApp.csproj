@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Ave.Extensions.Console.StateManagement" Version="1.0.0-beta3" />
-    <PackageReference Include="CSharpFunctionalExtensions" Version="2.39.2" />
+    <PackageReference Include="Ave.Extensions.Functional" Version="0.0.4-beta" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="7.0.0" />

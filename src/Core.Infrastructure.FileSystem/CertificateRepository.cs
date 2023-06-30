@@ -1,5 +1,5 @@
 ﻿using Core.Application;
-using CSharpFunctionalExtensions;
+using Ave.Extensions.Functional;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Core.Infrastructure.FileSystem
@@ -15,12 +15,12 @@ namespace Core.Infrastructure.FileSystem
             _passwordProvider = passwordProvider;
         }
 
-        public Result<X509Certificate2> GetCertificate(string name)
+        public Result<X509Certificate2,string> GetCertificate(string name)
         {
             var filePath = Path.Combine(_certificateFolder, name);
             if(!File.Exists(filePath))
             {
-                return Result.Failure<X509Certificate2>($"Certificate {name} does not exist.");
+                return Result<X509Certificate2,string>.Failure($"Certificate {name} does not exist.");
             }
 
             X509Certificate2? signingCert = null;
@@ -54,10 +54,10 @@ namespace Core.Infrastructure.FileSystem
 
             if(attemptsLeft == 0)
             {
-                return Result.Failure<X509Certificate2>("Unable to load certificate {name}.");
+                return Result<X509Certificate2, string>.Failure("Unable to load certificate {name}.");
             }
 
-            return Result.Success<X509Certificate2>(signingCert);
+            return Result<X509Certificate2, string>.Success(signingCert);
         }
     }
 }

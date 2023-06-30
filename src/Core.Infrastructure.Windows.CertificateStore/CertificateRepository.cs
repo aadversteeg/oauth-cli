@@ -1,12 +1,12 @@
 ﻿using Core.Application;
-using CSharpFunctionalExtensions;
+using Ave.Extensions.Functional;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Core.Infrastructure.Windows.CertificateStore
 {
     public class CertificateRepository : ICertificateRepository
     {
-        public Result<X509Certificate2> GetCertificate(string name)
+        public Result<X509Certificate2, string> GetCertificate(string name)
         {
             X509Certificate2? signingCert = null;
 
@@ -16,10 +16,10 @@ namespace Core.Infrastructure.Windows.CertificateStore
             var certs = store.Certificates.Find(X509FindType.FindBySubjectName, name, false);
             if(certs.Count== 0)
             {
-                return Result.Failure<X509Certificate2>($"Certificate {name} does not exist.");
+                return Result<X509Certificate2, string>.Failure($"Certificate {name} does not exist.");
             }
 
-            return Result.Success<X509Certificate2>(certs[0]);
+            return Result<X509Certificate2, string>.Success(certs[0]);
         }
     }
 }

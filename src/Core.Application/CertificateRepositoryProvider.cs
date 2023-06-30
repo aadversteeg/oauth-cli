@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+﻿using Ave.Extensions.Functional;
 
 namespace Core.Application
 {
