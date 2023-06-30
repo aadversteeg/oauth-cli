@@ -46,7 +46,9 @@ namespace Core.Infrastructure.ConsoleApp
                 return String.Empty;
             }
 
+
             var openIdConfiguration = await GetOpenIdConfiguration(clientConfiguration.WellknownEndpoint, cancellationToken);
+
 
             var codeVerifier = GenerateRandomCodeVerifier();
             var codeChallenge = GenerateCodeChallenge(codeVerifier);
@@ -238,10 +240,17 @@ namespace Core.Infrastructure.ConsoleApp
             Console.WriteLine(body);
 
             var client = new HttpClient();
-            var response = await client.PostAsync(
-                openIdConfiguration.TokenEndpoint,
-                new StringContent(body, Encoding.UTF8, "application/x-www-form-urlencoded"), cancellationToken);
+            var request = new HttpRequestMessage()
+            {
+                RequestUri = new Uri(openIdConfiguration.TokenEndpoint),
+                Method = HttpMethod.Get,
+                Content = new StringContent(body, Encoding.UTF8, "application/x-www-form-urlencoded")
+            };
 
+            request.Headers.Add("Origin", "https://localhost");
+
+            var response = await client.SendAsync(request);
+            
             var tokenResult = await response.Content.ReadAsStringAsync();
 
             var json = JsonSerializer.Deserialize<object>(tokenResult);
