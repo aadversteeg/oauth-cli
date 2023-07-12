@@ -30,10 +30,11 @@ namespace Core.Infrastructure.ConsoleApp
         private readonly IPasswordProvider _passwordProvider;
 
         public ClientService(
-            IConsole console, 
-            ICertificateRepositoryProvider certificateProviderFactory, 
+            IConsole console,
+            ICertificateRepositoryProvider certificateProviderFactory,
             IPasswordProvider passwordProvider,
-            IDictionary<string, ClientConfiguration> clients) {
+            IDictionary<string, ClientConfiguration> clients)
+        {
             _console = console;
             _certificateProviderFactory = certificateProviderFactory;
             _passwordProvider = passwordProvider;
@@ -74,7 +75,7 @@ namespace Core.Infrastructure.ConsoleApp
             scopes = scopes.Select(s => HttpUtility.UrlEncode(s)).ToArray();
 
             var encodedScopes = string.Join(" ", scopes);
-
+            string tokenResult = null;
 
             // Get the code
 
@@ -116,7 +117,6 @@ namespace Core.Infrastructure.ConsoleApp
                 builder.WebHost.UseUrls(serverUrl);
 
                 var app = builder.Build();
-
                 // Configure the HTTP request pipeline.
 
                 //app.UseHttpsRedirection();
@@ -128,10 +128,110 @@ namespace Core.Infrastructure.ConsoleApp
                     .AllowAnyHeader();
                 });
 
-                app.MapGet(redirectUri.AbsolutePath, (string? code) =>
+                app.MapGet(redirectUri.AbsolutePath, async (string? code) =>
                 {
                     returnedCode = code;
-                    return "Received Code";
+
+                    var formFields = new Dictionary<string, string>();
+                    formFields.Add("client_id", clientConfiguration.ClientId);
+
+                    if (clientConfiguration.ClientSecret != null)
+                    {
+                        formFields.Add("client_secret", clientConfiguration.ClientSecret);
+                    }
+
+                    X509Certificate2 signingCert = null;
+
+                    if (clientConfiguration.ClientCertificateName != null)
+                    {
+                        var maybeClientRepository = clientConfiguration.ClientCertificateStore != null ?
+                            _certificateProviderFactory.GetRepository(clientConfiguration.ClientCertificateStore) :
+                            _certificateProviderFactory.GetRepository("windows-certificate-store");
+
+                        if (maybeClientRepository.HasValue)
+                        {
+                            var certificateResult = maybeClientRepository.Value.GetCertificate(clientConfiguration.ClientCertificateName);
+                            if (certificateResult.IsFailure)
+                            {
+                                throw new Exception(certificateResult.Error);
+                            }
+
+                            signingCert = certificateResult.Value;
+                        }
+                    }
+
+                    if (signingCert != null)
+                    {
+                        var jwtToken = JwtCreator.CreateTokenWithX509SigningCredentials(signingCert, clientConfiguration.ClientId, clientConfiguration.TenantId);
+                        formFields.Add("client_assertion_type", UrlEncoder.Default.Encode("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
+                        formFields.Add("client_assertion", jwtToken);
+                    }
+
+                    formFields.Add("scope", encodedScopes);
+
+                    if (clientConfiguration.GrantType == Configuration.GrantType.AuthorizationCode)
+                    {
+                        formFields.Add("grant_type", "authorization_code");
+
+                        formFields.Add("code", returnedCode);
+                        formFields.Add("redirect_uri", encodedRedirectUri);
+
+                        if (usePKCE)
+                        {
+                            formFields.Add("code_verifier", codeVerifier);
+                        }
+                    }
+
+                    if (clientConfiguration.GrantType == Configuration.GrantType.ClientCredentials)
+                    {
+                        formFields.Add("grant_type", "client_credentials");
+                    }
+
+                    if (clientConfiguration.GrantType == Configuration.GrantType.Password)
+                    {
+                        Console.Write("Username:");
+                        var userName = Console.ReadLine();
+                        Console.WriteLine($"-{userName}-");
+
+                        var password = _passwordProvider.GetPassword("Password");
+                        Console.WriteLine();
+
+                        formFields.Add("grant_type", "password");
+                        formFields.Add("username", userName);
+                        formFields.Add("password", password);
+                    }
+
+                    Console.WriteLine("Form fields:");
+                    foreach (var formField in formFields)
+                        Console.WriteLine($"  {formField.Key}={formField.Value}");
+
+                    var body = BodyFormatter.Format(formFields);
+
+                    Console.WriteLine(body);
+
+                    var client = new HttpClient();
+                    var request = new HttpRequestMessage()
+                    {
+                        RequestUri = new Uri(openIdConfiguration.TokenEndpoint),
+                        Method = HttpMethod.Get,
+                        Content = new StringContent(body, Encoding.UTF8, "application/x-www-form-urlencoded")
+                    };
+
+                    request.Headers.Add("Origin", "https://localhost");
+
+                    var response = await client.SendAsync(request);
+
+                    tokenResult = await response.Content.ReadAsStringAsync();
+
+                    var json = JsonSerializer.Deserialize<object>(tokenResult);
+                    var jsonSerializerOptions = new JsonSerializerOptions
+                    {
+                        WriteIndented = true,
+                    };
+
+                    tokenResult = JsonSerializer.Serialize(json, jsonSerializerOptions);
+
+                    return tokenResult;
                 });
 
                 var thread = new Thread(() => app.Run());
@@ -156,111 +256,10 @@ namespace Core.Infrastructure.ConsoleApp
                 Console.WriteLine($"Received code: {returnedCode}");
             }
 
-            // Now get the token
-
-            var formFields = new Dictionary<string, string>();
-            formFields.Add("client_id", clientConfiguration.ClientId);
-
-            if (clientConfiguration.ClientSecret != null)
-            {
-                formFields.Add("client_secret", clientConfiguration.ClientSecret);
-            }
-
-            X509Certificate2 signingCert = null;
-
-            if (clientConfiguration.ClientCertificateName != null)
-            {
-                var maybeClientRepository = clientConfiguration.ClientCertificateStore != null ?
-                    _certificateProviderFactory.GetRepository(clientConfiguration.ClientCertificateStore) :
-                    _certificateProviderFactory.GetRepository("windows-certificate-store");
-
-                if (maybeClientRepository.HasValue)
-                {
-                    var certificateResult = maybeClientRepository.Value.GetCertificate(clientConfiguration.ClientCertificateName);
-                    if (certificateResult.IsFailure)
-                    {
-                        throw new Exception(certificateResult.Error);
-                    }
-
-                    signingCert = certificateResult.Value;
-                }
-            }
-
-            if (signingCert != null)
-            {
-                var jwtToken = JwtCreator.CreateTokenWithX509SigningCredentials(signingCert, clientConfiguration.ClientId, clientConfiguration.TenantId);
-                formFields.Add("client_assertion_type", UrlEncoder.Default.Encode("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
-                formFields.Add("client_assertion", jwtToken);
-            }
-
-            formFields.Add("scope", encodedScopes);
-
-            if (clientConfiguration.GrantType == Configuration.GrantType.AuthorizationCode)
-            {
-                formFields.Add("grant_type", "authorization_code");
-
-                formFields.Add("code", returnedCode);
-                formFields.Add("redirect_uri", encodedRedirectUri);
-
-                if (usePKCE)
-                {
-                    formFields.Add("code_verifier", codeVerifier);
-                }
-            }
-
-            if (clientConfiguration.GrantType == Configuration.GrantType.ClientCredentials)
-            {
-                formFields.Add("grant_type", "client_credentials");
-            }
-
-            if (clientConfiguration.GrantType == Configuration.GrantType.Password)
-            {
-                Console.Write("Username:");
-                var userName = Console.ReadLine();
-                Console.WriteLine($"-{userName}-");
-
-                var password = _passwordProvider.GetPassword("Password");
-                Console.WriteLine();
-
-                formFields.Add("grant_type", "password");
-                formFields.Add("username", userName);
-                formFields.Add("password", password);
-            }
-
-            Console.WriteLine("Form fields:");
-            foreach (var formField in formFields)
-                Console.WriteLine($"  {formField.Key}={formField.Value}");
-
-            var body = BodyFormatter.Format(formFields);
-
-            Console.WriteLine(body);
-
-            var client = new HttpClient();
-            var request = new HttpRequestMessage()
-            {
-                RequestUri = new Uri(openIdConfiguration.TokenEndpoint),
-                Method = HttpMethod.Get,
-                Content = new StringContent(body, Encoding.UTF8, "application/x-www-form-urlencoded")
-            };
-
-            request.Headers.Add("Origin", "https://localhost");
-
-            var response = await client.SendAsync(request);
-            
-            var tokenResult = await response.Content.ReadAsStringAsync();
-
-            var json = JsonSerializer.Deserialize<object>(tokenResult);
-            var jsonSerializerOptions = new JsonSerializerOptions
-            {
-                WriteIndented = true,
-            };
-
-            tokenResult = JsonSerializer.Serialize(json, jsonSerializerOptions);
-
             return tokenResult;
         }
 
-        public Task<IReadOnlyCollection<string>> GetClients(CancellationToken cancellationToken) 
+        public Task<IReadOnlyCollection<string>> GetClients(CancellationToken cancellationToken)
         {
             var clientNames = (IReadOnlyCollection<string>)_clients.Keys;
             return Task.FromResult(clientNames);
