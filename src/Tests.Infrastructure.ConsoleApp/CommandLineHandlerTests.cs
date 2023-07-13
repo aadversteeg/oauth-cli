@@ -1,5 +1,7 @@
 ﻿using Ave.Extensions.Console.StateManagement;
+using Ave.Extensions.Functional;
 using Core.Infrastructure.ConsoleApp;
+using Core.Infrastructure.ConsoleApp.Models;
 using FluentAssertions;
 using Moq;
 using System.CommandLine;
@@ -18,7 +20,8 @@ namespace Tests.Infrastructure.ConsoleApp
         {
             // arrange
             var clientServiceMock = new Mock<IClientService>();
-            clientServiceMock.Setup(m => m.GetAccessToken(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("access-token");
+            clientServiceMock.Setup(m => m.GetAccessToken(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result<GetTokenResponse, GetTokenError>.Success(new GetTokenResponse() { AccessToken = "", TokenType = ""}));
             var stateManagerMock = new Mock<IStateManager>();
             var console = new TestConsole();
             var commandLineHandler = new CommandLineHandler(clientServiceMock.Object, console, stateManagerMock.Object);
