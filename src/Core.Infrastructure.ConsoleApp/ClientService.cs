@@ -19,6 +19,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using System.Security.Cryptography;
 using Core.Application;
+using Ave.Extensions.Functional;
+using Core.Infrastructure.ConsoleApp.Models;
 
 namespace Core.Infrastructure.ConsoleApp
 {
@@ -40,7 +42,7 @@ namespace Core.Infrastructure.ConsoleApp
             _clients = clients;
         }
 
-        public async Task<string> GetAccessToken(string clientName, CancellationToken cancellationToken)
+        public async Task<Result<GetTokenResponse, GetTokenError>> GetAccessToken(string clientName, CancellationToken cancellationToken)
         {
             Console.WriteLine($"Authorizing for client {clientName}");
 
@@ -51,8 +53,7 @@ namespace Core.Infrastructure.ConsoleApp
 
             if (!_clients.TryGetValue(clientName, out clientConfiguration))
             {
-                Console.WriteLine($"No configuration for client {clientName}!");
-                return String.Empty;
+                throw new Exception($"No configuration for client {clientName}!");
             }
 
 
@@ -246,18 +247,34 @@ namespace Core.Infrastructure.ConsoleApp
             request.Headers.Add("Origin", "https://localhost");
 
             var response = await client.SendAsync(request);
-            
+                        
+
             var tokenResult = await response.Content.ReadAsStringAsync();
-
-            var json = JsonSerializer.Deserialize<object>(tokenResult);
-            var jsonSerializerOptions = new JsonSerializerOptions
+            if(response.Content.Headers.ContentType.MediaType == "application/json")
             {
-                WriteIndented = true,
-            };
+                var json = JsonSerializer.Deserialize<object>(tokenResult);
+                var jsonSerializerOptions = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                };
 
-            tokenResult = JsonSerializer.Serialize(json, jsonSerializerOptions);
+                var indentedTokenResult = JsonSerializer.Serialize(json, jsonSerializerOptions);
+                Console.WriteLine(indentedTokenResult);
+            }
+            else
+            {
+                Console.WriteLine(tokenResult);
+            }
+                       
 
-            return tokenResult;
+            if( response.IsSuccessStatusCode == true)
+            {
+                var getTokenResponse = JsonSerializer.Deserialize<GetTokenResponse>(tokenResult);
+                return Result<GetTokenResponse, GetTokenError>.Success(getTokenResponse);
+            }
+
+            var getTokenError = JsonSerializer.Deserialize<GetTokenError>(tokenResult);
+            return Result<GetTokenResponse, GetTokenError>.Failure(getTokenError);
         }
 
         public Task<IReadOnlyCollection<string>> GetClients(CancellationToken cancellationToken) 

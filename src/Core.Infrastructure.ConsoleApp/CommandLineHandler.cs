@@ -1,6 +1,10 @@
-﻿using System.CommandLine;
+﻿using System;
+using System.Collections.Generic;
+using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.IO;
+using System.Diagnostics;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Ave.Extensions.Console.StateManagement;
 using Core.Infrastructure.ConsoleApp.Extensions;
@@ -41,8 +45,27 @@ namespace Core.Infrastructure.ConsoleApp
             getAccessTokenCommand.SetHandler(async (context, cancellationToken) =>
                 {
                     var clientNameArgumentValue = context.ParseResult.GetValueForArgument(clientNameArgument);
-                    var accessToken = await _clientService.GetAccessToken(clientNameArgumentValue, cancellationToken);
-                    context.Console.WriteLine($"Received token: {accessToken}");
+                    var getAccessTokenResult = await _clientService.GetAccessToken(clientNameArgumentValue, cancellationToken);
+
+                    var jsonSerializerOptions = new JsonSerializerOptions
+                    {
+                        WriteIndented = true,
+                    };
+
+                    var getAccessTokenResultAsString = JsonSerializer.Serialize((object) (getAccessTokenResult.IsSuccess ? getAccessTokenResult.Value : getAccessTokenResult.Error), jsonSerializerOptions);
+                    context.Console.WriteLine($"Received token:");
+                    context.Console.WriteLine(getAccessTokenResultAsString);
+
+                    if (getAccessTokenResult.IsSuccess)
+                    {
+                        var ps = new ProcessStartInfo($"https://jwt.ms/#id_token={getAccessTokenResult.Value.AccessToken}")
+                        {
+                            UseShellExecute = true,
+                            Verb = "open"
+                        };
+                        Process.Start(ps);
+                    }
+
                 }, 
                 HandleCancellation);
 
