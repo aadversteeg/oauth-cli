@@ -21,6 +21,7 @@ using System.Security.Cryptography;
 using Core.Application;
 using Ave.Extensions.Functional;
 using Core.Infrastructure.ConsoleApp.Models;
+using Core.Infrastructure.ConsoleApp.Extensions;
 
 namespace Core.Infrastructure.ConsoleApp
 {
@@ -244,8 +245,12 @@ namespace Core.Infrastructure.ConsoleApp
                 Content = new StringContent(body, Encoding.UTF8, "application/x-www-form-urlencoded")
             };
 
-            request.Headers.Add("Origin", "https://localhost");
 
+            if(clientConfiguration.IsSpa())
+            {
+                request.Headers.Add("Origin", "https://localhost");
+            }
+            
             var response = await client.SendAsync(request);
                         
 
