@@ -71,7 +71,7 @@ In order to use these, the certificate stores need to be defined in the appsetti
 
 ```
 
-The certificate store can be used in a client configuration when the grant type is ClientCredential:
+The certificate store can be used in a client configuration when the grant type is ClientCredentials:
 
 ``` json
 {
@@ -83,7 +83,7 @@ The certificate store can be used in a client configuration when the grant type 
         "clientCertificateStore": "certificates-on-d",
         "grantType": "ClientCredentials",
         "scopes": [
-          "api://transaviacom.onmicrosoft.com/some-api/.default"
+          "api://mytenant.onmicrosoft.com/some-api/.default"
         ]
       }
   }
