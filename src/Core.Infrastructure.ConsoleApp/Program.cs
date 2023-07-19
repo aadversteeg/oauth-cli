@@ -1,24 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.CommandLine.IO;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Reflection;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using Ave.Extensions.Console.StateManagement;
 using Core.Application;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
+using Core.Infrastructure.ConsoleApp.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -57,6 +45,8 @@ namespace Core.Infrastructure.ConsoleApp
             configurationBuilder.AddEnvironmentVariables();
             configuration = configurationBuilder.Build();
 
+
+
             // Get all client configurations
             var clientConfigurations = new Dictionary<string, Configuration.ClientConfiguration>();
             configuration.GetSection("clients").Bind(clientConfigurations);
@@ -78,13 +68,33 @@ namespace Core.Infrastructure.ConsoleApp
             var console = new SystemConsole();
             var passwordProvider = new PasswordProvider();
 
-            // todo: get certificate stores from app settings
-            var certificateProviderFactory = new CertificateRepositoryProvider(
-                new Dictionary<string, ICertificateRepository>
+            // Get certificate stores from app settings
+
+            var certificateStoreConfigurations = new Dictionary<string, CertificateStoreConfiguration>();
+            configuration.GetSection("certificateStores").Bind(certificateStoreConfigurations);
+
+            var certificateRepositories = new Dictionary<string, ICertificateRepository>();
+
+
+            foreach (var certificateStoreConfiguration in certificateStoreConfigurations)
+            {
+                if (certificateStoreConfiguration.Value.Type == CertificateStoreType.Windows)
                 {
-                    { "windows-certificate-store", new Windows.CertificateStore.CertificateRepository() },
-                    { "local-file-system", new FileSystem.CertificateRepository("D:\\Transavia\\Certificates", passwordProvider) }
-                });
+                    WindowsCertificateStoreConfiguration windowsCertificateStoreConfiguration = new WindowsCertificateStoreConfiguration();
+                    configuration.GetSection($"certificateStores:{certificateStoreConfiguration.Key}").Bind(windowsCertificateStoreConfiguration);
+
+                    certificateRepositories.Add(certificateStoreConfiguration.Key, new Windows.CertificateStore.CertificateRepository(windowsCertificateStoreConfiguration.Location));
+                }
+                else if (certificateStoreConfiguration.Value.Type == CertificateStoreType.LocalFile)
+                {
+                    LocalFileCertificateStoreConfiguration localFileCertificateStoreConfiguration = new LocalFileCertificateStoreConfiguration();
+                    configuration.GetSection($"certificateStores:{certificateStoreConfiguration.Key}").Bind(localFileCertificateStoreConfiguration);
+
+                    certificateRepositories.Add(certificateStoreConfiguration.Key, new FileSystem.CertificateRepository(localFileCertificateStoreConfiguration.Folder, passwordProvider));
+                }
+            }
+
+            var certificateProviderFactory = new CertificateRepositoryProvider(certificateRepositories);
 
             var commandLineHandler = new CommandLineHandler(
                 new ClientService(console, 

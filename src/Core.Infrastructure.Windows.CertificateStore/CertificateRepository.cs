@@ -6,11 +6,18 @@ namespace Core.Infrastructure.Windows.CertificateStore
 {
     public class CertificateRepository : ICertificateRepository
     {
+        private readonly StoreLocation _location;
+
+        public CertificateRepository(StoreLocation location)
+        {
+            _location = location;
+        }
+
         public Result<X509Certificate2, string> GetCertificate(string name)
         {
             X509Certificate2? signingCert = null;
 
-            X509Store store = new X509Store(StoreLocation.CurrentUser);
+            X509Store store = new X509Store(_location);
             store.Open(OpenFlags.ReadOnly);
 
             var certs = store.Certificates.Find(X509FindType.FindBySubjectName, name, false);

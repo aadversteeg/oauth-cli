@@ -174,7 +174,7 @@ namespace Core.Infrastructure.ConsoleApp
             {
                 var maybeClientRepository = clientConfiguration.ClientCertificateStore != null ?
                     _certificateProviderFactory.GetRepository(clientConfiguration.ClientCertificateStore) :
-                    _certificateProviderFactory.GetRepository("windows-certificate-store");
+                    _certificateProviderFactory.GetRepository("windows");
 
                 if (maybeClientRepository.HasValue)
                 {
