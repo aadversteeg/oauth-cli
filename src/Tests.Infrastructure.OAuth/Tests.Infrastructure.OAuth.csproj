@@ -21,7 +21,6 @@
     <PackageReference Include="Ave.Extensions.Functional.FluentAssertions" Version="0.0.4-beta" />
     <PackageReference Include="FluentAssertions" Version="6.11.0" />
     <PackageReference Include="Ave.Extensions.Functional" Version="0.0.4-beta" />
-    <PackageReference Include="FluentAssertions" Version="6.9.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />
     <PackageReference Include="Moq" Version="4.18.4" />
     <PackageReference Include="WireMock.Net" Version="1.5.32" />
