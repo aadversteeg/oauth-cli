@@ -100,7 +100,8 @@ namespace Core.Infrastructure.ConsoleApp
                 new ClientService(console, 
                     certificateProviderFactory, 
                     passwordProvider, 
-                    clientConfigurations
+                    clientConfigurations,
+                    new OAuth.GetTokenService()
                 ), 
                 console, 
                 stateManager);

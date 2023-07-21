@@ -22,6 +22,7 @@ using Core.Application;
 using Ave.Extensions.Functional;
 using Core.Infrastructure.ConsoleApp.Models;
 using Core.Infrastructure.ConsoleApp.Extensions;
+using Core.Application.Models;
 
 namespace Core.Infrastructure.ConsoleApp
 {
@@ -31,19 +32,23 @@ namespace Core.Infrastructure.ConsoleApp
         private readonly IDictionary<string, ClientConfiguration> _clients;
         private readonly ICertificateRepositoryProvider _certificateProviderFactory;
         private readonly IPasswordProvider _passwordProvider;
+        private readonly IGetTokenService _getTokenService;
 
         public ClientService(
             IConsole console, 
             ICertificateRepositoryProvider certificateProviderFactory, 
             IPasswordProvider passwordProvider,
-            IDictionary<string, ClientConfiguration> clients) {
+            IDictionary<string, ClientConfiguration> clients,
+            IGetTokenService getTokenService)
+        {
             _console = console;
             _certificateProviderFactory = certificateProviderFactory;
             _passwordProvider = passwordProvider;
             _clients = clients;
+            _getTokenService = getTokenService;
         }
 
-        public async Task<Result<GetTokenResponse, GetTokenError>> GetAccessToken(string clientName, CancellationToken cancellationToken)
+        public async Task<Result<GetTokenSuccess, GetTokenError>> GetAccessToken(string clientName, CancellationToken cancellationToken)
         {
             Console.WriteLine($"Authorizing for client {clientName}");
 
@@ -163,6 +168,8 @@ namespace Core.Infrastructure.ConsoleApp
             var formFields = new Dictionary<string, string>();
             formFields.Add("client_id", clientConfiguration.ClientId);
 
+            var headers = new Dictionary<string, string>();
+
             if (clientConfiguration.ClientSecret != null)
             {
                 formFields.Add("client_secret", clientConfiguration.ClientSecret);
@@ -233,53 +240,12 @@ namespace Core.Infrastructure.ConsoleApp
             foreach (var formField in formFields)
                 Console.WriteLine($"  {formField.Key}={formField.Value}");
 
-            var body = BodyFormatter.Format(formFields);
-
-            Console.WriteLine(body);
-
-            var client = new HttpClient();
-            var request = new HttpRequestMessage()
+            if (clientConfiguration.IsSpa())
             {
-                RequestUri = new Uri(openIdConfiguration.TokenEndpoint),
-                Method = HttpMethod.Get,
-                Content = new StringContent(body, Encoding.UTF8, "application/x-www-form-urlencoded")
-            };
-
-
-            if(clientConfiguration.IsSpa())
-            {
-                request.Headers.Add("Origin", "https://localhost");
-            }
-            
-            var response = await client.SendAsync(request);
-                        
-
-            var tokenResult = await response.Content.ReadAsStringAsync();
-            if(response.Content.Headers.ContentType.MediaType == "application/json")
-            {
-                var json = JsonSerializer.Deserialize<object>(tokenResult);
-                var jsonSerializerOptions = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                };
-
-                var indentedTokenResult = JsonSerializer.Serialize(json, jsonSerializerOptions);
-                Console.WriteLine(indentedTokenResult);
-            }
-            else
-            {
-                Console.WriteLine(tokenResult);
-            }
-                       
-
-            if( response.IsSuccessStatusCode == true)
-            {
-                var getTokenResponse = JsonSerializer.Deserialize<GetTokenResponse>(tokenResult);
-                return Result<GetTokenResponse, GetTokenError>.Success(getTokenResponse);
+                headers.Add("Origin", "https://localhost");
             }
 
-            var getTokenError = JsonSerializer.Deserialize<GetTokenError>(tokenResult);
-            return Result<GetTokenResponse, GetTokenError>.Failure(getTokenError);
+            return await _getTokenService.GetToken(new Uri(openIdConfiguration.TokenEndpoint), headers, formFields);
         }
 
         public Task<IReadOnlyCollection<string>> GetClients(CancellationToken cancellationToken) 

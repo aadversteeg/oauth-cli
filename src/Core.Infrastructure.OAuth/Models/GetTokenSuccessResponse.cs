@@ -2,7 +2,7 @@
 
 namespace Core.Infrastructure.ConsoleApp.Models
 {
-    public class GetTokenResponse
+    public class GetTokenSuccessResponse
     {
         [JsonPropertyName("access_token")]
         public required string AccessToken { get; set; }
@@ -14,7 +14,7 @@ namespace Core.Infrastructure.ConsoleApp.Models
         public int? ExpiresIn { get; set; }
 
         [JsonPropertyName("refresh_token")]
-        public  string? RefreshToken { get; set; }
+        public string? RefreshToken { get; set; }
 
         [JsonPropertyName("scope")]
         public string? Scope { get; set; }

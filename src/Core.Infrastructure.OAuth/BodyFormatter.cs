@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-namespace Core.Infrastructure.ConsoleApp
+﻿namespace Core.Infrastructure.OAuth
 {
     public class BodyFormatter
     {
@@ -15,3 +12,4 @@ namespace Core.Infrastructure.ConsoleApp
         }
     }
 }
+

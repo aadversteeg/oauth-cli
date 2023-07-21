@@ -2,7 +2,7 @@
 
 namespace Core.Infrastructure.ConsoleApp.Models
 {
-    public class GetTokenError
+    public class GetTokenErrorResponse
     {
         [JsonPropertyName("error")]
         public required string Error { get; set; }

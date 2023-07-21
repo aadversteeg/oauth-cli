@@ -9,11 +9,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests.Infrastructure.Consol
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Infrastructure.GitHub", "Core.Infrastructure.GitHub\Core.Infrastructure.GitHub.csproj", "{8BDA8EBB-0683-4B29-8807-0EAA03946B7C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Application", "Core.Application\Core.Application.csproj", "{3212D1FB-96FE-4FBF-8650-4ED8BD892741}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Application", "Core.Application\Core.Application.csproj", "{3212D1FB-96FE-4FBF-8650-4ED8BD892741}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Infrastructure.FileSystem", "Core.Infrastructure.FileSystem\Core.Infrastructure.FileSystem.csproj", "{1081595A-403E-4CBB-8275-474F0307E1EE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Infrastructure.FileSystem", "Core.Infrastructure.FileSystem\Core.Infrastructure.FileSystem.csproj", "{1081595A-403E-4CBB-8275-474F0307E1EE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Infrastructure.Windows.CertificateStore", "Core.Infrastructure.Windows.CertificateStore\Core.Infrastructure.Windows.CertificateStore.csproj", "{165885A5-5D1E-468D-A402-EF8D6F922C0C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Infrastructure.Windows.CertificateStore", "Core.Infrastructure.Windows.CertificateStore\Core.Infrastructure.Windows.CertificateStore.csproj", "{165885A5-5D1E-468D-A402-EF8D6F922C0C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Infrastructure.OAuth", "Core.Infrastructure.OAuth\Core.Infrastructure.OAuth.csproj", "{D2035A97-3F4B-4B5C-A624-DF452416F30D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.Infrastructure.OAuth", "Tests.Infrastructure.OAuth\Tests.Infrastructure.OAuth.csproj", "{F7FB8F26-004A-4B2C-9E78-0A7AE0CEB673}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +49,14 @@ Global
 		{165885A5-5D1E-468D-A402-EF8D6F922C0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{165885A5-5D1E-468D-A402-EF8D6F922C0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{165885A5-5D1E-468D-A402-EF8D6F922C0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2035A97-3F4B-4B5C-A624-DF452416F30D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2035A97-3F4B-4B5C-A624-DF452416F30D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2035A97-3F4B-4B5C-A624-DF452416F30D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2035A97-3F4B-4B5C-A624-DF452416F30D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7FB8F26-004A-4B2C-9E78-0A7AE0CEB673}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7FB8F26-004A-4B2C-9E78-0A7AE0CEB673}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7FB8F26-004A-4B2C-9E78-0A7AE0CEB673}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7FB8F26-004A-4B2C-9E78-0A7AE0CEB673}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
