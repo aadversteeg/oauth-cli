@@ -58,7 +58,8 @@ namespace Tests.Infrastructure.OAuth
 
             // Then
             response.Should().Succeed();
-            response.Value.Should().BeEquivalentTo(new GetTokenSuccess()
+            response.Value.IsSuccess.Should().BeTrue();
+            response.Value.Success.Should().BeEquivalentTo(new GetTokenSuccess()
             {
                 AccessToken = "7779HHKHKHKK6683TY3",
                 TokenType = "bearer",
@@ -89,8 +90,9 @@ namespace Tests.Infrastructure.OAuth
             var response = await getTokenService.GetToken(new System.Uri($"{Server.Urls[0]}/token"), new Dictionary<string, string>(), new Dictionary<string, string>());
 
             // Then
-            response.Should().Fail();
-            response.Error.Should().BeEquivalentTo(
+            response.Should().Succeed();
+            response.Value.IsFailure.Should().BeTrue();
+            response.Value.Error.Should().BeEquivalentTo(
                 new GetTokenError()
                 {
                     Error = "invalid_request"

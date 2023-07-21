@@ -8,7 +8,7 @@ namespace Core.Infrastructure.ConsoleApp
 {
     public interface IClientService
     {
-        Task<Result<GetTokenSuccess, GetTokenError>> GetAccessToken(string clientName, CancellationToken cancellationToken);
+        Task<Result<GetTokenResult, string>> GetAccessToken(string clientName, CancellationToken cancellationToken);
         Task<IReadOnlyCollection<string>> GetClients(CancellationToken cancellationToken);
     }
 }

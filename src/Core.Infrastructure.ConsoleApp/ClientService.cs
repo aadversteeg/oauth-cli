@@ -49,7 +49,7 @@ namespace Core.Infrastructure.ConsoleApp
             _getOpenIdConfigurationService = getOpenIdConfigurationService;
         }
 
-        public async Task<Result<GetTokenSuccess, GetTokenError>> GetAccessToken(string clientName, CancellationToken cancellationToken)
+        public async Task<Result<GetTokenResult, string>> GetAccessToken(string clientName, CancellationToken cancellationToken)
         {
             Console.WriteLine($"Authorizing for client {clientName}");
 
@@ -60,7 +60,8 @@ namespace Core.Infrastructure.ConsoleApp
 
             if (!_clients.TryGetValue(clientName, out clientConfiguration))
             {
-                throw new Exception($"No configuration for client {clientName}!");
+                return Result<GetTokenResult, string>.Failure($"No configuration for client \"{clientName}\".");
+
             }
 
             var openIdConfiguration = await _getOpenIdConfigurationService.GetOpenIdConfiguration(new Uri(clientConfiguration.WellknownEndpoint));

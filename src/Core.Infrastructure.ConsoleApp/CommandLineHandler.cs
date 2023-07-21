@@ -45,23 +45,33 @@ namespace Core.Infrastructure.ConsoleApp
                     var clientNameArgumentValue = context.ParseResult.GetValueForArgument(clientNameArgument);
                     var getAccessTokenResult = await _clientService.GetAccessToken(clientNameArgumentValue, cancellationToken);
 
-                    var jsonSerializerOptions = new JsonSerializerOptions
+                    if (getAccessTokenResult.IsFailure)
                     {
-                        WriteIndented = true,
-                    };
-
-                    var getAccessTokenResultAsString = JsonSerializer.Serialize((object) (getAccessTokenResult.IsSuccess ? getAccessTokenResult.Value : getAccessTokenResult.Error), jsonSerializerOptions);
-                    context.Console.WriteLine($"Received token:");
-                    context.Console.WriteLine(getAccessTokenResultAsString);
-
-                    if (getAccessTokenResult.IsSuccess)
+                        context.Console.Error.WriteLine(getAccessTokenResult.Error);
+                        context.ExitCode = 1;
+                    }
+                    else
                     {
-                        var ps = new ProcessStartInfo($"https://jwt.ms/#id_token={getAccessTokenResult.Value.AccessToken}")
+                        var jsonSerializerOptions = new JsonSerializerOptions
                         {
-                            UseShellExecute = true,
-                            Verb = "open"
+                            WriteIndented = true,
                         };
-                        Process.Start(ps);
+
+                        var getAccessTokenResultAsString = JsonSerializer.Serialize((object)(getAccessTokenResult.Value.IsSuccess ? getAccessTokenResult.Value.Success : getAccessTokenResult.Value.Error), jsonSerializerOptions);
+                        context.Console.WriteLine($"GetTokenResult:");
+                        context.Console.WriteLine(getAccessTokenResultAsString);
+
+
+                        if (getAccessTokenResult.Value.IsSuccess)
+                        {
+                            context.ExitCode = 0;
+                            var ps = new ProcessStartInfo($"https://jwt.ms/#id_token={getAccessTokenResult.Value.Success.AccessToken}")
+                            {
+                                UseShellExecute = true,
+                                Verb = "open"
+                            };
+                            Process.Start(ps);
+                        }
                     }
 
                 }, 

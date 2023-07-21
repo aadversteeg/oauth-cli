@@ -1,5 +1,6 @@
 ﻿using Ave.Extensions.Functional;
 using Core.Application;
+using Core.Application.Models;
 using Core.Infrastructure.ConsoleApp.Models;
 using System.Text;
 using System.Text.Json;
@@ -8,7 +9,7 @@ namespace Core.Infrastructure.OAuth
 {
     public class GetTokenService: IGetTokenService
     {
-        public async Task<Result<Application.Models.GetTokenSuccess, Application.Models.GetTokenError>> GetToken(Uri tokenEndpoint, IReadOnlyDictionary<string,string> headers, IReadOnlyDictionary<string, string> content)
+        public async Task<Result<Application.Models.GetTokenResult, string>> GetToken(Uri tokenEndpoint, IReadOnlyDictionary<string,string> headers, IReadOnlyDictionary<string, string> content)
         {
             using var client = new HttpClient();
 
@@ -33,25 +34,27 @@ namespace Core.Infrastructure.OAuth
             if (response.IsSuccessStatusCode == true)
             {
                 var getTokenSuccessResponse = JsonSerializer.Deserialize<GetTokenSuccessResponse>(responseContent);
-                return Result<Application.Models.GetTokenSuccess, Application.Models.GetTokenError>.Success(
-                    new Application.Models.GetTokenSuccess()
-                    {
-                        AccessToken = getTokenSuccessResponse.AccessToken,
-                        TokenType = getTokenSuccessResponse.TokenType,
-                        ExpiresIn = getTokenSuccessResponse.ExpiresIn,
-                        RefreshToken = getTokenSuccessResponse.RefreshToken,
-                        Scope = getTokenSuccessResponse.Scope
-                    });
+                return Result<Application.Models.GetTokenResult, string>.Success(
+                    GetTokenResult.ToSuccess(
+                        new Application.Models.GetTokenSuccess()
+                        {
+                            AccessToken = getTokenSuccessResponse.AccessToken,
+                            TokenType = getTokenSuccessResponse.TokenType,
+                            ExpiresIn = getTokenSuccessResponse.ExpiresIn,
+                            RefreshToken = getTokenSuccessResponse.RefreshToken,
+                            Scope = getTokenSuccessResponse.Scope
+                        }));
             }
 
             var getTokenErrorResponse = JsonSerializer.Deserialize<GetTokenErrorResponse>(responseContent);
-            return Result<Application.Models.GetTokenSuccess, Application.Models.GetTokenError>.Failure(
-                new Application.Models.GetTokenError()
-                {
-                    Error = getTokenErrorResponse.Error,
-                    ErrorDescription = getTokenErrorResponse.ErrorDescription,
-                    ErrorUri = getTokenErrorResponse.ErrorUri
-                });
+            return Result<Application.Models.GetTokenResult, string>.Success(
+                GetTokenResult.ToError(
+                    new Application.Models.GetTokenError()
+                    {
+                        Error = getTokenErrorResponse.Error,
+                        ErrorDescription = getTokenErrorResponse.ErrorDescription,
+                        ErrorUri = getTokenErrorResponse.ErrorUri
+                    }));
         }
     }
 }
