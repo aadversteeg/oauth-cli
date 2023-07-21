@@ -1,7 +1,7 @@
 ﻿using Ave.Extensions.Functional;
 using Core.Application;
 using Core.Application.Models;
-using Core.Infrastructure.ConsoleApp.Models;
+using Core.Infrastructure.OAuth.Models;
 using System.Text;
 using System.Text.Json;
 
@@ -9,7 +9,7 @@ namespace Core.Infrastructure.OAuth
 {
     public class GetTokenService: IGetTokenService
     {
-        public async Task<Result<Application.Models.GetTokenResult, string>> GetToken(Uri tokenEndpoint, IReadOnlyDictionary<string,string> headers, IReadOnlyDictionary<string, string> content)
+        public async Task<Result<GetTokenResult, string>> GetToken(Uri tokenEndpoint, IReadOnlyDictionary<string,string> headers, IReadOnlyDictionary<string, string> content)
         {
             using var client = new HttpClient();
 
@@ -34,9 +34,9 @@ namespace Core.Infrastructure.OAuth
             if (response.IsSuccessStatusCode == true)
             {
                 var getTokenSuccessResponse = JsonSerializer.Deserialize<GetTokenSuccessResponse>(responseContent);
-                return Result<Application.Models.GetTokenResult, string>.Success(
-                    GetTokenResult.ToSuccess(
-                        new Application.Models.GetTokenSuccess()
+                return Result<GetTokenResult, string>.Success(
+                    GetTokenResult.Create(
+                        new GetTokenSuccess()
                         {
                             AccessToken = getTokenSuccessResponse.AccessToken,
                             TokenType = getTokenSuccessResponse.TokenType,
@@ -47,9 +47,9 @@ namespace Core.Infrastructure.OAuth
             }
 
             var getTokenErrorResponse = JsonSerializer.Deserialize<GetTokenErrorResponse>(responseContent);
-            return Result<Application.Models.GetTokenResult, string>.Success(
-                GetTokenResult.ToError(
-                    new Application.Models.GetTokenError()
+            return Result<GetTokenResult, string>.Success(
+                GetTokenResult.Create(
+                    new GetTokenError()
                     {
                         Error = getTokenErrorResponse.Error,
                         ErrorDescription = getTokenErrorResponse.ErrorDescription,

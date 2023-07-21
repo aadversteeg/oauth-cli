@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Core.Infrastructure.ConsoleApp.Models
+namespace Core.Infrastructure.OAuth.Models
 {
     internal class GetTokenSuccessResponse
     {

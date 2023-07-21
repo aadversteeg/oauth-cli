@@ -24,7 +24,7 @@ namespace Core.Infrastructure.OAuth
                 var responseContent = await response.Content.ReadAsStringAsync();
                 var successResponse = JsonSerializer.Deserialize<GetOpenIdConfigurationSuccessResponse>(responseContent);
                 return Result<OpenIdConfiguration, string>.Success(
-                        new OpenIdConfiguration(
+                    new OpenIdConfiguration(
                         successResponse.Issuer,
                         new Uri(successResponse.TokenEndpoint),
                         new Uri(successResponse.AuthorizationEndpoint)));

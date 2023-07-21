@@ -42,12 +42,12 @@
             }
         }
 
-        public static GetTokenResult ToSuccess(GetTokenSuccess value)
+        public static GetTokenResult Create(GetTokenSuccess value)
         {
             return new GetTokenResult(true, value, default);
         }
 
-        public static GetTokenResult ToError(GetTokenError error)
+        public static GetTokenResult Create(GetTokenError error)
         {
             return new GetTokenResult(false, default, error);
         }

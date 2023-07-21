@@ -21,7 +21,7 @@ namespace Tests.Infrastructure.ConsoleApp
             var clientServiceMock = new Mock<IClientService>();
             clientServiceMock.Setup(m => m.GetAccessToken(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Result<GetTokenResult, string>.Success( 
-                    GetTokenResult.ToSuccess(new GetTokenSuccess() { AccessToken = "", TokenType = ""})));
+                    GetTokenResult.Create(new GetTokenSuccess() { AccessToken = "", TokenType = ""})));
 
             var stateManagerMock = new Mock<IStateManager>();
             var console = new TestConsole();
