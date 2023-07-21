@@ -1,6 +1,5 @@
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
-using WireMock.Server;
 using Xunit;
 using FluentAssertions;
 using System.Threading.Tasks;
@@ -9,11 +8,20 @@ using Core.Infrastructure.OAuth;
 using System.Collections.Generic;
 using Ave.Extensions.Functional.FluentAssertions;
 using Core.Application.Models;
+using WireMock.Server;
 
 namespace Tests.Infrastructure.OAuth
 {
-    public class GetTokenServiceTests
+    public class GetTokenServiceTests : IClassFixture<WireMockTestsFixture>
     {
+        private readonly WireMockTestsFixture _wireMockTestsFixture;
+
+        public GetTokenServiceTests(WireMockTestsFixture wireMockTestsFixture) {
+            _wireMockTestsFixture = wireMockTestsFixture;
+        }
+
+        public WireMockServer Server => _wireMockTestsFixture.Server;
+
         public string GetResponseBody(string responseName)
         {
             var assembly = this.GetType().Assembly;
@@ -32,11 +40,9 @@ namespace Tests.Infrastructure.OAuth
         public async Task GTS001()
         {
             // Given
-            var server = WireMockServer.Start();
-
             var responseBody = GetResponseBody("success");
 
-            server
+            Server
                 .Given(Request.Create().WithPath("/token").UsingGet())
                 .RespondWith(
                   Response.Create()
@@ -48,7 +54,7 @@ namespace Tests.Infrastructure.OAuth
             var getTokenService = new GetTokenService();
 
             // When
-            var response = await getTokenService.GetToken(new System.Uri($"{server.Urls[0]}/token"), new Dictionary<string, string>(), new Dictionary<string, string>());
+            var response = await getTokenService.GetToken(new System.Uri($"{Server.Urls[0]}/token"), new Dictionary<string, string>(), new Dictionary<string, string>());
 
             // Then
             response.Should().Succeed();
@@ -60,19 +66,15 @@ namespace Tests.Infrastructure.OAuth
                 RefreshToken = "703JH3YU89YH389T3878T38",
                 Scope = "profile.read"
             });
-
-            server.Stop();
         }
 
         [Fact(DisplayName = "GTS-002 Should return GetTokenError on 400 response")]
         public async Task GTS002()
         {
             // Given
-            var server = WireMockServer.Start();
-
             var responseBody = GetResponseBody("failure");
 
-            server
+            _wireMockTestsFixture.Server
                 .Given(Request.Create().WithPath("/token").UsingGet())
                 .RespondWith(
                   Response.Create()
@@ -84,7 +86,7 @@ namespace Tests.Infrastructure.OAuth
             var getTokenService = new GetTokenService();
 
             // When
-            var response = await getTokenService.GetToken(new System.Uri($"{server.Urls[0]}/token"), new Dictionary<string, string>(), new Dictionary<string, string>());
+            var response = await getTokenService.GetToken(new System.Uri($"{Server.Urls[0]}/token"), new Dictionary<string, string>(), new Dictionary<string, string>());
 
             // Then
             response.Should().Fail();
@@ -93,8 +95,6 @@ namespace Tests.Infrastructure.OAuth
                 {
                     Error = "invalid_request"
                 });
-
-            server.Stop();
         }
     }
 }
