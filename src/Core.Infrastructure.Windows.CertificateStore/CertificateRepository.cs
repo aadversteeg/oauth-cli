@@ -15,8 +15,6 @@ namespace Core.Infrastructure.Windows.CertificateStore
 
         public Result<X509Certificate2, string> GetCertificate(string name)
         {
-            X509Certificate2? signingCert = null;
-
             X509Store store = new X509Store(_location);
             store.Open(OpenFlags.ReadOnly);
 

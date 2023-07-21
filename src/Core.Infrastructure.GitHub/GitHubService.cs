@@ -1,8 +1,4 @@
 ﻿using System.Net.Http.Json;
-using System.Reflection;
-using System.Threading;
-using System;
-using System.Linq;
 using Core.Infrastructure.GitHub.Models;
 
 namespace Core.Infrastructure.GitHub

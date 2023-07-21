@@ -4,7 +4,6 @@ using Core.Infrastructure.ConsoleApp;
 using Core.Infrastructure.ConsoleApp.Models;
 using FluentAssertions;
 using Moq;
-using System.CommandLine;
 using System.CommandLine.IO;
 using System.Threading;
 using System.Threading.Tasks;
