@@ -101,7 +101,8 @@ namespace Core.Infrastructure.ConsoleApp
                     certificateProviderFactory, 
                     passwordProvider, 
                     clientConfigurations,
-                    new OAuth.GetTokenService()
+                    new OAuth.GetTokenService(),
+                    new OAuth.GetOpenIdConfigurationService()
                 ), 
                 console, 
                 stateManager);

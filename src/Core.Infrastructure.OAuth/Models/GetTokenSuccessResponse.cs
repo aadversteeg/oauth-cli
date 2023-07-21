@@ -2,7 +2,7 @@
 
 namespace Core.Infrastructure.ConsoleApp.Models
 {
-    public class GetTokenSuccessResponse
+    internal class GetTokenSuccessResponse
     {
         [JsonPropertyName("access_token")]
         public required string AccessToken { get; set; }

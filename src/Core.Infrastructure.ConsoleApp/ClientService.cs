@@ -19,7 +19,6 @@ using Microsoft.AspNetCore.Hosting;
 using System.Security.Cryptography;
 using Core.Application;
 using Ave.Extensions.Functional;
-using Core.Infrastructure.ConsoleApp.Models;
 using Core.Infrastructure.ConsoleApp.Extensions;
 using Core.Application.Models;
 
@@ -32,19 +31,22 @@ namespace Core.Infrastructure.ConsoleApp
         private readonly ICertificateRepositoryProvider _certificateProviderFactory;
         private readonly IPasswordProvider _passwordProvider;
         private readonly IGetTokenService _getTokenService;
+        private readonly IGetOpenIdConfigurationService _getOpenIdConfigurationService;
 
         public ClientService(
             IConsole console, 
             ICertificateRepositoryProvider certificateProviderFactory, 
             IPasswordProvider passwordProvider,
             IDictionary<string, ClientConfiguration> clients,
-            IGetTokenService getTokenService)
+            IGetTokenService getTokenService,
+            IGetOpenIdConfigurationService getOpenIdConfigurationService)
         {
             _console = console;
             _certificateProviderFactory = certificateProviderFactory;
             _passwordProvider = passwordProvider;
             _clients = clients;
             _getTokenService = getTokenService;
+            _getOpenIdConfigurationService = getOpenIdConfigurationService;
         }
 
         public async Task<Result<GetTokenSuccess, GetTokenError>> GetAccessToken(string clientName, CancellationToken cancellationToken)
@@ -61,8 +63,7 @@ namespace Core.Infrastructure.ConsoleApp
                 throw new Exception($"No configuration for client {clientName}!");
             }
 
-
-            var openIdConfiguration = await GetOpenIdConfiguration(clientConfiguration.WellknownEndpoint, cancellationToken);
+            var openIdConfiguration = await _getOpenIdConfigurationService.GetOpenIdConfiguration(new Uri(clientConfiguration.WellknownEndpoint));
 
 
             var codeVerifier = GenerateRandomCodeVerifier();
@@ -86,7 +87,7 @@ namespace Core.Infrastructure.ConsoleApp
 
             if (clientConfiguration.GrantType == Configuration.GrantType.AuthorizationCode)
             {
-                var url = $"{openIdConfiguration.AuthorizeEndpoint}?" +
+                var url = $"{openIdConfiguration.Value.AuthorizationEndpoint}?" +
                     $"client_id={clientConfiguration.ClientId}" +
                     $"&response_type=code" +
                     $"&redirect_uri={encodedRedirectUri}" +
@@ -244,19 +245,13 @@ namespace Core.Infrastructure.ConsoleApp
                 headers.Add("Origin", "https://localhost");
             }
 
-            return await _getTokenService.GetToken(new Uri(openIdConfiguration.TokenEndpoint), headers, formFields);
+            return await _getTokenService.GetToken(openIdConfiguration.Value.TokenEndpoint, headers, formFields);
         }
 
         public Task<IReadOnlyCollection<string>> GetClients(CancellationToken cancellationToken) 
         {
             var clientNames = (IReadOnlyCollection<string>)_clients.Keys;
             return Task.FromResult(clientNames);
-        }
-
-        private static Task<Models.OpenIdConfiguration?> GetOpenIdConfiguration(string url, CancellationToken cancellationToken)
-        {
-            var client = new HttpClient();
-            return client.GetFromJsonAsync<Models.OpenIdConfiguration>(url, cancellationToken);
         }
 
         private static string GenerateRandomCodeVerifier()

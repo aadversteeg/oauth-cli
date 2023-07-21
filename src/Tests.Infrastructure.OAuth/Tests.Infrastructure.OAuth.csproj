@@ -8,11 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="GetOpenIdConfigurationResponses\success.json" />
     <None Remove="GetTokenResponses\failure.json" />
     <None Remove="GetTokenResponses\success.json" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="GetOpenIdConfigurationResponses\success.json" />
     <EmbeddedResource Include="GetTokenResponses\failure.json" />
     <EmbeddedResource Include="GetTokenResponses\success.json" />
   </ItemGroup>

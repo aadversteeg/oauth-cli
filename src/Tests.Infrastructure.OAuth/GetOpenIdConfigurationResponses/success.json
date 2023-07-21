@@ -1,0 +1,5 @@
+﻿{
+  "issuer":  "http://tokenprovider",
+  "token_endpoint": "http://tokenprovider/token",
+  "authorization_endpoint": "http://tokenprovider/authorize"
+}
