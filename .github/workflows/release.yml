@@ -46,7 +46,7 @@ jobs:
         run: dotnet restore ${{ env.SOLUTION_FILE }}
         
       - name: Build
-        run: dotnet build ${{ env.SOLUTION_FILE }} --no-restore -p:PublishSingleFile=true
+        run: dotnet build  -r win-x64 ${{ env.SOLUTION_FILE }} --no-restore -p:PublishSingleFile=true
         
       - name: Publish
 
