@@ -1,8 +1,8 @@
 # OAUTH CLI Changelog
 
+## 2024-01-23 Version 0.0.8
 
-## 2023-07-19 Version 0.0.7
-
+- Fixed version check
 - Restructured code
 - Removed duplicate package references
 - Improved error handling

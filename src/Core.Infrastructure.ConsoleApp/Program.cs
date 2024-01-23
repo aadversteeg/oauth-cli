@@ -114,7 +114,7 @@ namespace Core.Infrastructure.ConsoleApp
                 await Task.Delay(200);
             }
 
-            var currentVersion = new Version(Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
+            var currentVersion = new Version(Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion.Split("+")[0]);
             if (currentVersion < latestVersion)
             {
                 Console.WriteLine($"A newer version is available {currentVersion} -> {latestVersion}");
