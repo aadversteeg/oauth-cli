@@ -1,5 +1,12 @@
 # OAUTH CLI Changelog
 
+
+## 2023-07-19 Version 0.0.7
+
+- Restructured code
+- Removed duplicate package references
+- Improved error handling
+
 ## 2023-07-19 Version 0.0.6
 
 - Added possibility to configure certificate stores:
